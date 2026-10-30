@@ -50,21 +50,34 @@ npm publish --access public
 
 ## 5. 上架市场
 
-索引文件 `<https://cdn.jsdelivr.net/npm/dsh-plugin-catalog/index.json>` 的条目结构：
+市场索引是 [awesome-dsh-plugin/awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 的生成物，收录方式是**一个文件一个 PR**，不改 README（README 由脚本从 `data/plugins/*.yml` 生成）。
 
-```json
-{
-  "name": "@scope/dsh-ponytail",
-  "title": "<owner>/dsh-ponytail",
-  "description": { "zh": "…", "en": "…" },
-  "repository": { "url": "https://github.com/<owner>/dsh-ponytail" },
-  "metadata": { "category": "skill", "keywords": [], "labels": [] }
-}
+### 门槛
+
+- 仓库的 `package.json` 声明 `dsh.bundle` ✅
+- 仓库有真实可用的代码 ✅
+- **仓库创建满 1 天**（本仓库建于 2026-10-30T01:37Z，最早 2026-10-31T01:37Z 可提交）
+- 能被 `dsh plugin add` 安装 ✅
+
+### 提交步骤
+
+1. Fork `awesome-dsh-plugin/awesome-dsh-plugin`
+2. 在 fork 里新建 `data/plugins/xiaoyueD2009__dsh-ponytail.yml`：
+
+```yaml
+url: https://github.com/xiaoyueD2009/dsh-ponytail
+name: xiaoyueD2009/dsh-ponytail
+category: skill
+description:
+  en: Ponytail's lazy-senior-dev rules kept always-on in the DeepSeek Harness system prompt, plus six skills, bilingual descriptions, and one-command upstream updates.
+  zh: 把 Ponytail 的「偷懒资深开发者」规则常驻进 DeepSeek Harness 系统提示，附带 6 个技能、中英双语描述，以及一条命令跟随上游更新。
 ```
 
-提交渠道还没查实（索引里没有说明链接），需要去 dshopen.org 或 catalog 仓库找入口。分类选 `skill`。
+3. 对 `main` 发 PR，标题类似 `Add xiaoyueD2009/dsh-ponytail`
 
-描述建议写明两点差异：**内容跟随上游 5.x**、**支持 `/ponytail update` 一键更新**；同时写明它不提供图形面板。
+描述里含 `: `（冒号加空格）时必须用引号，否则 YAML 解析失败；上面的文案已避开。
+
+分类可选值里有 `skill`，对应这个插件的定位。图标可省略，省略时用作者头像。
 
 ## 6. 之后每次发版
 
