@@ -56,6 +56,30 @@ plugin_manager → install_bundle → /path/to/dsh-ponytail
 
 卸载后 10 秒内轮询 profile 清单：若 `dependencies` 里已没有 `dsh-ponytail`，删除 `~/.dsh/ponytail/`；若还在，说明只是禁用或升级，保留状态。
 
+## 这个插件做什么
+
+- 把上游 5.3.2 的规则**常驻**进系统提示（`systemPrompt.section`，order 50），新会话自动生效
+- 6 个技能，可用 `/ponytail skills off <name>` 单独关闭，不用删文件
+- `/ponytail lite|full|ultra|off` 切换强度，`default <level>` 持久化默认值
+- `/ponytail update` 跟随上游，支持 `--edge` / `--status` / `--reset`
+- 卸载清空本地状态；禁用或升级保留
+- 全部状态只有一个文件：`~/.dsh/ponytail/config.json`
+
+## 这个插件不做什么
+
+明确不做，别指望：
+
+| 不做 | 说明 |
+|---|---|
+| 图形面板 | 没有设置卡片、没有级别选择器、没有诊断视图，一切靠命令 |
+| 双语技能描述 | `/` 菜单里显示上游英文原文 |
+| band / board / 状态栏 | 那是 Claude Code 的扩展点，DSH 没有对应能力 |
+| Claude Code hooks | SessionStart / SubagentStart / UserPromptSubmit 都没有对应实现 |
+| 自动更新 | 不会后台联网，必须手动跑 `/ponytail update` |
+| 跨 profile 自动安装 | 只装当前 profile，换 profile 要再装一次 |
+| 成本 / 用量统计 | 不读 token、不算钱、不写遥测 |
+| 上游的 benchmarks / examples / 20 个宿主适配 | 只搬 `AGENTS.md` 和 6 个 `SKILL.md` |
+
 ## 与其他 ponytail 移植的对比
 
 数据取自各自仓库/市场索引，标注「未核验」的项我没有逐一打开源码验证。
@@ -67,39 +91,41 @@ plugin_manager → install_bundle → /path/to/dsh-ponytail
 | 级别命令 | ✅ | ✅ + `default` | ✅ | ❌ | 未核验 | ❌ |
 | 技能开关 | ✅ 命令 | ✅ 命令 + 面板 | 未核验 | ❌ | 未核验 | ❌ 只能删目录 |
 | 图形面板 | ❌ | ✅ 级别/开关/诊断 | 未核验 | ❌ | ❌ | ❌ |
-| 内容版本 | **5.3.2** | **4.10.0**（逐字节比对） | 未核验 | 未核验 | 未核验 | 5.3.2（需手动同步） |
+| 技能描述语言 | 英文原文 | 中英双语可切 | 未核验 | 未核验 | 未核验 | 英文原文 |
+| 内容版本 | **5.3.2** | **4.10.0**（5 个文件逐字节相同） | 未核验 | 未核验 | 未核验 | 5.3.2（需手动同步） |
 | 跟随上游 | ✅ 内置命令 | ❌ 等作者发版 | 未核验 | ❌ | ❌ | ❌ 手动 |
-| 代码面 | 562 行，可一眼审完 | ~120KB（含 30KB client） | 未核验 | 小 | 小 | 0 |
+| 代码面 | 571 行，可一眼审完 | ~120KB（含 30KB client） | 未核验 | 小 | 小 | 0 |
 | 版本门禁 | 无 | `engines.dsh <= 0.2.1` | 未核验 | 未核验 | 未核验 | 无 |
 | 体积 | 80KB，零依赖 | 1.1MB，peer 5 个 | 未核验 | 未核验 | 未核验 | 0 |
 | 维护 | 自己维护 | 第三方，活跃 | 第三方 | 第三方 | 第三方 | 原作者 |
 
 版本与日期：@wenaixi 5.6.2（2026-10-24）、@mengyuly 0.4.3（2026-10-17）、gongyijie85 0.1.7（2026-09-30）、hoyyang 0.1.0（2026-09-21）。
 
-### 本插件不如别人的地方
+### 逐个说明
 
-1. **没有图形面板**。改级别、开关技能都得打命令；@wenaixi 有沉浸式面板和三层优先级诊断。
-2. **技能描述是英文原文**。`/` 菜单里显示英文；@wenaixi 做了中英双语并可切换。
-3. **只装一个 profile**。desktop 之外的 profile 要各装一次；原版路径靠全局 `AGENTS.md`，天然覆盖所有 profile。
-4. **自维护**。没有测试套件、没有 CI、没有发版流程；上游若改 frontmatter 结构，只能自己跟。
-5. **更新依赖网络**。raw 域名在部分网络下超时（已加 jsDelivr 兜底），两个源都挂时报错，但不会损坏现有内容。
-6. **与 @wenaixi 互斥**。两者都用 `ponytail` 作为 system prompt section 名，DSH 里同名 section 重复注册会抛错，只能二选一。
-7. **band / board 没有移植**。那是 Claude Code 的状态栏与本地看板，DSH 没有对应扩展点。
+**@wenaixi/dsh-ponytail 5.6.2** — 功能最全的一个。有图形面板（级别、技能开关、三层优先级诊断）、中英双语描述、零缓存 miss 的增量注入、子 agent 适配。没有内置更新；内容停在上游 4.10.0（5 个 `SKILL.md` 与 4.10.0 逐字节相同，`ponytail-help` 为适配 DSH 改过），用的是 v4 的 `ponytail:` 约定，而 v5 已改为 `shortcut:`，所以它的 `/ponytail-debt` 会漏收 v5 写法；`engines.dsh` 卡在 `<=0.2.1`。**要面板选它，要新内容选这个。**
 
-### 本插件比它们强的地方
+**@mengyuly/dsh-ponytail 0.4.3** — identity 类，宣称 always-on persona 与级别持久化，更接近「人格插件」。内部实现和内容版本未核验。
 
-1. **内容最新**。5.3.2 原文；@wenaixi 的 5 个 `SKILL.md` 与上游 4.10.0 逐字节相同（`ponytail-help` 为适配 DSH 改过），用的是 v4 约定（`ponytail:` 注释），而 v5 已改成 `shortcut:`，因此它的 `/ponytail-debt` 会漏收 v5 写法。
-2. **代码面可审计**。562 行对手写解析器 + 命令 + 更新 + 清理，没有打包产物，读一遍就知道它在你的提示词里放什么。
-3. **跟随上游是内置能力**，不依赖第三方作者发版节奏。
-4. **无版本门禁**。@wenaixi 的 `engines.dsh` 是 `>=0.2.0-rc.1 <=0.2.1`，当前运行时 `0.2.1-rc.3` 按严格 semver 判不过（市场索引标 compatible，实际以安装返回为准）。
-5. **卸载有明确语义**：卸载清零、禁用/升级保留，且不依赖手工清理。
+**gongyijie85/dsh-ponytail 0.1.7** — 只打包 6 个技能，无常驻、无命令、无更新。**只要技能、不想改系统提示就选它。**
+
+**hoyyang/dsh-best-ponytail 0.1.0** — 规则集形态，9 月发布，未核验。
+
+**原版路径** — `AGENTS.md` 放 `~/.dsh/AGENTS.md`，技能放 `~/.agents/skills/`。零代码、天然覆盖所有 profile，但没有开关、没有级别命令、更新和卸载都靠手工。
+
+### 本插件明确弱于 @wenaixi 的地方
+
+1. 没有图形面板，改级别/开关技能都要打命令
+2. 技能描述是英文，不做双语切换
+3. 与它**互斥**：两者都用 `ponytail` 作为 system prompt section 名，同时装会因重复注册抛错
 
 ### 什么时候别用这个
 
-- 想要图形配置、双语技能描述 → 用 [@wenaixi](https://github.com/Wenaixi/dsh-ponytail)。
-- 只想要最省事、不介意内容版本旧 → 同样选 @wenaixi。
-- 一个插件都不想装、只想把规则贴进去 → 用原版路径：`AGENTS.md` 放 `~/.dsh/AGENTS.md`，技能放 `~/.agents/skills/`。
-- 需要跨多个 profile 一致 → 原版路径比任何 bundle 都省事。
+- 想要图形配置、双语技能描述 → 用 [@wenaixi](https://github.com/Wenaixi/dsh-ponytail)
+- 只想要最省事、不介意内容版本旧 → 同样选 @wenaixi
+- 只想要技能、不想动系统提示 → 用 gongyijie85 那个
+- 一个插件都不想装、只想把规则贴进去 → 用原版路径
+- 需要跨多个 profile 一致 → 原版路径比任何 bundle 都省事
 
 本插件的存在理由只有一个：**要上游 5.x 的最新内容，同时保留可装可卸和一条命令跟随更新**。超出这个范围，上面的替代品更合适。
 
