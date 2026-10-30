@@ -579,7 +579,7 @@ function localeFromSettings() {
 
 function readZhDescriptions() {
   try {
-    const data = JSON.parse(readFileSync(join(PKG_DIR, 'locale', 'skills.zh.json'), 'utf8'))
+    const data = JSON.parse(readFileSync(join(PKG_DIR, 'descriptions.zh.json'), 'utf8'))
     return data && typeof data === 'object' && !Array.isArray(data) ? data : {}
   } catch {
     return {}

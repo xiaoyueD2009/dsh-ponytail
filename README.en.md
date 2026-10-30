@@ -41,7 +41,7 @@ A missing, corrupt, or invalid file falls back to `full`, every skill enabled, a
 
 ## Bilingual descriptions
 
-`locale/skills.zh.json` holds a Chinese description for each skill. Resolution order:
+`descriptions.zh.json` holds a Chinese description for each skill. Resolution order:
 
 1. explicit `descriptionLang` (`zh` / `en`)
 2. `auto` → the host's `locale.preference` in `$DSH_HOME/settings.yaml`
