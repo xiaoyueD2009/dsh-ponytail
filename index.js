@@ -50,14 +50,16 @@ export function apply(ctx) {
   const state = {
     level: config.defaultMode,
     disabled: new Set(config.disabledSkills),
+    descriptionLang: config.descriptionLang,
     stateDir,
     configPath,
     configured: config.configured,
     contentDir: resolveContentDir(stateDir),
     upstream: readUpstream(stateDir),
   }
+  state.lang = resolveDescLang(state)
 
-  let skills = loadSkills(state.contentDir, log)
+  let skills = loadSkills(state.contentDir, log, state.lang)
   let mounted = []
 
   const mount = () => {
@@ -90,7 +92,8 @@ export function apply(ctx) {
   const reloadContent = () => {
     state.contentDir = resolveContentDir(state.stateDir)
     state.upstream = readUpstream(state.stateDir)
-    skills = loadSkills(state.contentDir, log)
+    state.lang = resolveDescLang(state)
+    skills = loadSkills(state.contentDir, log, state.lang)
     remount()
   }
 
@@ -141,6 +144,7 @@ export async function runCommand(rawInput, state, currentSkills, remount, reload
   }
 
   if (head === 'skills') return skillsCommand(rest, state, currentSkills(), remount, log)
+  if (head === 'lang') return langCommand(rest, state, reloadContent, log)
   if (head === 'update') return updateCommand(rest, state, currentSkills(), reloadContent, log)
 
   if (LEVELS.includes(head)) {
@@ -166,6 +170,16 @@ function skillsCommand(rest, state, skills, remount, log) {
   writeConfig(state, log)
   remount()
   return ok(skillsText(state, skills))
+}
+
+function langCommand(rest, state, reloadContent, log) {
+  const value = rest[0]
+  if (!value) return ok(`技能描述语言：${state.descriptionLang}（当前使用 ${state.lang}）`)
+  if (!['auto', 'zh', 'en'].includes(value)) return fail('用法：/ponytail lang [auto|zh|en]')
+  state.descriptionLang = value
+  writeConfig(state, log)
+  reloadContent()
+  return ok(`技能描述语言已设为 ${value}（当前使用 ${state.lang}）`)
 }
 
 function statusText(state, skills) {
@@ -355,7 +369,7 @@ function dshHome() {
 }
 
 function readConfig(path, log) {
-  const fallback = { defaultMode: DEFAULT_LEVEL, disabledSkills: [], configured: false }
+  const fallback = { defaultMode: DEFAULT_LEVEL, disabledSkills: [], descriptionLang: 'auto', configured: false }
   try {
     const data = JSON.parse(readFileSync(path, 'utf8').replace(/^\uFEFF/, ''))
     if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('not an object')
@@ -364,7 +378,8 @@ function readConfig(path, log) {
     const disabledSkills = Array.isArray(data.disabledSkills)
       ? data.disabledSkills.filter((name) => typeof name === 'string' && SKILL_NAME.test(name))
       : []
-    return { defaultMode, disabledSkills, configured: true }
+    const descriptionLang = ['auto', 'zh', 'en'].includes(data.descriptionLang) ? data.descriptionLang : 'auto'
+    return { defaultMode, disabledSkills, descriptionLang, configured: true }
   } catch (error) {
     if (error?.code !== 'ENOENT') log.warn(`config ignored (${msg(error)}); using defaults`)
     return fallback
@@ -379,6 +394,7 @@ function writeConfig(state, log) {
       schemaVersion: SCHEMA_VERSION,
       defaultMode: state.level,
       disabledSkills: [...state.disabled].sort(),
+      descriptionLang: state.descriptionLang,
     }, null, 2)}\n`
     const tmp = join(dir, `.config.${process.pid}.tmp`)
     writeFileSync(tmp, body, 'utf8')
@@ -456,8 +472,9 @@ function profileDirFrom(ctx) {
 
 // ------------------------------------------------------------------ skills
 
-function loadSkills(contentDir, log) {
+function loadSkills(contentDir, log, lang) {
   const skillsRoot = join(contentDir, 'skills')
+  const localized = lang === 'zh' ? readZhDescriptions() : {}
   let names = []
   try {
     names = readdirSync(skillsRoot).sort()
@@ -478,7 +495,7 @@ function loadSkills(contentDir, log) {
       if (!parsed.description) throw new Error('missing description')
       skills.push({
         name: parsed.name,
-        description: parsed.description,
+        description: localized[parsed.name] ?? parsed.description,
         content: parsed.content,
         path: file,
         source: 'bundled',
@@ -520,6 +537,36 @@ function parseFrontmatter(raw) {
     }
   }
   return out
+}
+
+/** Explicit config wins; otherwise the host's `locale.preference`, then English. */
+function resolveDescLang(state) {
+  if (state.descriptionLang === 'zh' || state.descriptionLang === 'en') return state.descriptionLang
+  return localeFromSettings() ?? 'en'
+}
+
+function localeFromSettings() {
+  try {
+    const lines = readFileSync(join(dshHome(), 'settings.yaml'), 'utf8').split(/\r?\n/)
+    let inLocale = false
+    for (const line of lines) {
+      if (/^locale:\s*$/.test(line)) { inLocale = true; continue }
+      if (!inLocale) continue
+      if (/^\S/.test(line)) break
+      const hit = /^\s+preference:\s*["']?(zh|en)["']?\s*$/.exec(line)
+      if (hit) return hit[1]
+    }
+  } catch { /* no settings file or unreadable */ }
+  return undefined
+}
+
+function readZhDescriptions() {
+  try {
+    const data = JSON.parse(readFileSync(join(PKG_DIR, 'locale', 'skills.zh.json'), 'utf8'))
+    return data && typeof data === 'object' && !Array.isArray(data) ? data : {}
+  } catch {
+    return {}
+  }
 }
 
 function promptText(contentDir, level, log) {

@@ -1,8 +1,10 @@
 # dsh-ponytail
 
-Ponytail for DeepSeek Harness: the lazy-senior-dev rules kept in the system prompt, six skills, a `/ponytail` command, and one-command upstream updates. Wrapped from [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) 5.3.2.
+[English](README.en.md) | 简体中文
 
-把 [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) 5.3.2 装进 DeepSeek Harness：规则常驻系统提示、6 个技能、一个 `/ponytail` 命令，内容可跟随上游更新。
+Ponytail for DeepSeek Harness: the lazy-senior-dev rules kept in the system prompt, six skills, a `/ponytail` command, and one-command upstream updates. Wrapped from [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) 5.3.3.
+
+把 [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) 5.3.3 装进 DeepSeek Harness：规则常驻系统提示、6 个技能、一个 `/ponytail` 命令，内容可跟随上游更新。
 
 仅面向 **desktop** profile（bundle 按 profile 安装；换 profile 需再装一次）。
 
@@ -22,6 +24,7 @@ plugin_manager → install_bundle → /path/to/dsh-ponytail
 /ponytail default <level>       写入默认级别
 /ponytail skills                列出技能与开关
 /ponytail skills on|off <name>  开关单个技能
+/ponytail lang [auto|zh|en]      技能描述语言，auto 跟随 DSH 的 locale
 /ponytail update                拉取上游最新版本
 /ponytail update --edge         跟随 GitHub main
 /ponytail update --status       查看当前内容来源
@@ -58,8 +61,9 @@ plugin_manager → install_bundle → /path/to/dsh-ponytail
 
 ## 这个插件做什么
 
-- 把上游 5.3.2 的规则**常驻**进系统提示（`systemPrompt.section`，order 50），新会话自动生效
+- 把上游 5.3.3 的规则**常驻**进系统提示（`systemPrompt.section`，order 50），新会话自动生效
 - 6 个技能，可用 `/ponytail skills off <name>` 单独关闭，不用删文件
+- 技能描述中英双语：`/ponytail lang` 切换，`auto` 跟随 DSH 的 `locale.preference`，缺省回退英文
 - `/ponytail lite|full|ultra|off` 切换强度，`default <level>` 持久化默认值
 - `/ponytail update` 跟随上游，支持 `--edge` / `--status` / `--reset`
 - 卸载清空本地状态；禁用或升级保留
@@ -72,7 +76,6 @@ plugin_manager → install_bundle → /path/to/dsh-ponytail
 | 不做 | 说明 |
 |---|---|
 | 图形面板 | 没有设置卡片、没有级别选择器、没有诊断视图，一切靠命令 |
-| 双语技能描述 | `/` 菜单里显示上游英文原文 |
 | band / board / 状态栏 | 那是 Claude Code 的扩展点，DSH 没有对应能力 |
 | Claude Code hooks | SessionStart / SubagentStart / UserPromptSubmit 都没有对应实现 |
 | 自动更新 | 不会后台联网，必须手动跑 `/ponytail update` |
@@ -91,10 +94,10 @@ plugin_manager → install_bundle → /path/to/dsh-ponytail
 | 级别命令 | ✅ | ✅ + `default` | ✅ | ❌ | 未核验 | ❌ |
 | 技能开关 | ✅ 命令 | ✅ 命令 + 面板 | 未核验 | ❌ | 未核验 | ❌ 只能删目录 |
 | 图形面板 | ❌ | ✅ 级别/开关/诊断 | 未核验 | ❌ | ❌ | ❌ |
-| 技能描述语言 | 英文原文 | 中英双语可切 | 未核验 | 未核验 | 未核验 | 英文原文 |
-| 内容版本 | **5.3.2** | **4.10.0**（5 个文件逐字节相同） | 未核验 | 未核验 | 未核验 | 5.3.2（需手动同步） |
+| 技能描述语言 | ✅ 中英可切，默认跟随 locale | ✅ 中英可切 | 未核验 | 未核验 | 未核验 | 英文原文 |
+| 内容版本 | **5.3.3** | **4.10.0**（5 个文件逐字节相同） | 未核验 | 未核验 | 未核验 | 5.3.3（需手动同步） |
 | 跟随上游 | ✅ 内置命令 | ❌ 等作者发版 | 未核验 | ❌ | ❌ | ❌ 手动 |
-| 代码面 | 571 行，可一眼审完 | ~120KB（含 30KB client） | 未核验 | 小 | 小 | 0 |
+| 代码面 | 618 行，可一眼审完 | ~120KB（含 30KB client） | 未核验 | 小 | 小 | 0 |
 | 版本门禁 | 无 | `engines.dsh <= 0.2.1` | 未核验 | 未核验 | 未核验 | 无 |
 | 体积 | 80KB，零依赖 | 1.1MB，peer 5 个 | 未核验 | 未核验 | 未核验 | 0 |
 | 维护 | 自己维护 | 第三方，活跃 | 第三方 | 第三方 | 第三方 | 原作者 |
@@ -116,12 +119,11 @@ plugin_manager → install_bundle → /path/to/dsh-ponytail
 ### 本插件明确弱于 @wenaixi 的地方
 
 1. 没有图形面板，改级别/开关技能都要打命令
-2. 技能描述是英文，不做双语切换
-3. 与它**互斥**：两者都用 `ponytail` 作为 system prompt section 名，同时装会因重复注册抛错
+2. 与它**互斥**：两者都用 `ponytail` 作为 system prompt section 名，同时装会因重复注册抛错
 
 ### 什么时候别用这个
 
-- 想要图形配置、双语技能描述 → 用 [@wenaixi](https://github.com/Wenaixi/dsh-ponytail)
+- 想要图形配置面板 → 用 [@wenaixi](https://github.com/Wenaixi/dsh-ponytail)
 - 只想要最省事、不介意内容版本旧 → 同样选 @wenaixi
 - 只想要技能、不想动系统提示 → 用 gongyijie85 那个
 - 一个插件都不想装、只想把规则贴进去 → 用原版路径
