@@ -1,6 +1,6 @@
 {
   "name": "@linsam262/dsh-ponytail",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Ponytail for DeepSeek Harness: lazy-senior-dev rules kept in the system prompt, six skills, and a /ponytail command, with one-command upstream updates.",
   "icon": "icon.svg",
