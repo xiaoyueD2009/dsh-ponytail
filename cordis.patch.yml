@@ -1,0 +1,4 @@
+# Ponytail bundle patch: one host-only row loads index.js.
+- insert:
+    - id: dsh-ponytail
+      name: "@linsam262/dsh-ponytail"

@@ -1,0 +1,49 @@
+{
+  "name": "@linsam262/dsh-ponytail",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Ponytail for DeepSeek Harness: lazy-senior-dev rules kept in the system prompt, six skills, and a /ponytail command, with one-command upstream updates.",
+  "icon": "icon.svg",
+  "license": "MIT",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "AGENTS.md",
+    "skills",
+    "locale",
+    "icon.svg",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "ponytail",
+    "skills",
+    "prompt"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "xiaoyueD2009",
+  "homepage": "https://github.com/xiaoyueD2009/dsh-ponytail#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xiaoyueD2009/dsh-ponytail.git"
+  },
+  "bugs": {
+    "url": "https://github.com/xiaoyueD2009/dsh-ponytail/issues"
+  }
+}
