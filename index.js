@@ -57,6 +57,7 @@ export function apply(ctx) {
     contentDir: resolveContentDir(stateDir),
     upstream: readUpstream(stateDir),
   }
+  state.hint = localeHint(ctx)
   state.lang = resolveDescLang(state)
 
   let skills = loadSkills(state.contentDir, log, state.lang)
@@ -539,10 +540,26 @@ function parseFrontmatter(raw) {
   return out
 }
 
-/** Explicit config wins; otherwise the host's `locale.preference`, then English. */
+/** Explicit config wins; otherwise the host locale hint, then English. */
 function resolveDescLang(state) {
   if (state.descriptionLang === 'zh' || state.descriptionLang === 'en') return state.descriptionLang
-  return localeFromSettings() ?? 'en'
+  return state.hint ?? 'en'
+}
+
+/** Best-effort host locale: the settings service, the settings file, then the environment. */
+function localeHint(ctx) {
+  try {
+    const preference = ctx.settings?.get?.('locale')?.preference
+    if (preference === 'zh' || preference === 'en') return preference
+  } catch { /* settings service absent or namespace unregistered */ }
+  const fromFile = localeFromSettings()
+  if (fromFile) return fromFile
+  try {
+    const env = (process.env.LC_ALL || process.env.LANGUAGE || process.env.LANG || '').toLowerCase()
+    if (env.startsWith('zh')) return 'zh'
+    if (env.startsWith('en')) return 'en'
+  } catch { /* no environment */ }
+  return undefined
 }
 
 function localeFromSettings() {
